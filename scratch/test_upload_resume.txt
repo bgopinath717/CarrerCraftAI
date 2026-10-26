@@ -1,0 +1,27 @@
+B. Gopinath
+Senior Full Stack MERN Developer | Chennai, India
+Email: gopinath@example.com
+
+PROFESSIONAL SUMMARY
+Senior MERN Stack Engineer with 4+ years of hands-on expertise building enterprise web applications, RESTful microservices, and reactive user interfaces using React, Node.js, Express, and MongoDB.
+
+TECHNICAL SKILLS
+- Languages: JavaScript (ES6+), TypeScript, HTML5, CSS3
+- Frontend: React.js, Redux Toolkit, Next.js, Tailwind CSS
+- Backend: Node.js, Express.js, RESTful APIs, Microservices, JWT Authentication
+- Databases: MongoDB, Mongoose, Redis, Schema Design & Indexing
+- DevOps & Tools: Git, GitHub, Docker, AWS (EC2, S3), Jest, CI/CD
+
+PROFESSIONAL EXPERIENCE
+Senior Full Stack Engineer | CloudTech Solutions (2022 - Present)
+- Engineered scalable RESTful microservices with Node.js and Express, processing over 100,000 daily API transactions.
+- Designed and optimized MongoDB aggregation pipelines and compound indexes, cutting query latency by 45%.
+- Implemented secure JWT role-based access control and OAuth2 flows.
+- Built responsive user dashboards in React.js with Redux state management.
+
+Frontend Developer | WebCraft Digital (2020 - 2022)
+- Developed interactive web portals with React, JavaScript, HTML5, and Tailwind CSS.
+- Automated testing with Jest and integrated third-party RESTful APIs.
+
+EDUCATION
+Bachelor of Engineering in Computer Science | Anna University (2016 - 2020)

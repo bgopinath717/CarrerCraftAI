@@ -1,0 +1,27 @@
+:root {
+  --text: #1E293B;
+  --text-h: #073B68;
+  --bg: #FFFFFF;
+  --border: #DCEAF5;
+  --code-bg: #F0F9FF;
+  --accent: #079FE8;
+  --accent-bg: rgba(7, 159, 232, 0.1);
+  --accent-border: rgba(7, 159, 232, 0.5);
+  --social-bg: #F0F9FF;
+  --shadow: rgba(7, 59, 104, 0.08) 0 10px 15px -3px, rgba(7, 59, 104, 0.04) 0 4px 6px -2px;
+
+  --sans: 'Plus Jakarta Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Outfit', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 16px/150% var(--sans);
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background-color: #F0F9FF;
+  color: #1E293B;
+}

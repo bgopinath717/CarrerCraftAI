@@ -1,0 +1,27 @@
+{
+  "name": "careercraft-ai-mern",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "ATS-Friendly Resume, Portfolio, Cover Letter and Career Recommendation Platform - Developed by B. Gopinath",
+  "scripts": {
+    "client": "npm run dev --prefix client",
+    "server": "npm run dev --prefix server",
+    "seed": "npm run seed --prefix server",
+    "dev": "node run-all.js",
+    "build": "npm run build --prefix client",
+    "start": "npm start --prefix server"
+  },
+  "keywords": [
+    "mern",
+    "mongodb",
+    "express",
+    "react",
+    "node",
+    "resume-builder",
+    "ats-checker",
+    "career-craft",
+    "portfolio-builder"
+  ],
+  "author": "B. Gopinath",
+  "license": "MIT"
+}
