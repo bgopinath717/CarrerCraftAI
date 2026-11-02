@@ -25,7 +25,7 @@ import { JOB_ROLES } from '../../data/jobRolesData';
 import { useToast } from '../common/Toast';
 
 export const ResumePreview = ({ resume, onTemplateChange }) => {
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1440 && window.innerWidth > 1024 ? 85 : 100));
   const [showAtsModal, setShowAtsModal] = useState(false);
   const [targetRole, setTargetRole] = useState(resume?.targetRole || 'mern-developer');
   const [atsAnalysis, setAtsAnalysis] = useState(null);
@@ -223,12 +223,32 @@ export const ResumePreview = ({ resume, onTemplateChange }) => {
       </div>
 
       {/* Live Resume Canvas Wrapper */}
-      <div className="resume-paper-container" style={{ flex: 1, minHeight: '650px', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-        <div style={{
-          transform: `scale(${zoom / 100})`,
-          transformOrigin: 'top center',
-          transition: 'transform 0.15s ease-out'
-        }}>
+      <div
+        className="resume-paper-container"
+        style={{
+          flex: 1,
+          minHeight: '650px',
+          overflow: 'auto',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: '1.5rem',
+          backgroundColor: 'var(--bg-surface-subtle)',
+          borderRadius: 'var(--radius-lg)'
+        }}
+      >
+        <div
+          style={{
+            width: '800px',
+            maxWidth: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            transform: `scale(${zoom / 100})`,
+            transformOrigin: 'top center',
+            transition: 'transform 0.15s ease-out',
+            flexShrink: 0
+          }}
+        >
           <ResumeTemplate resume={resume} template={resume.template || 'classic-ats'} />
         </div>
       </div>

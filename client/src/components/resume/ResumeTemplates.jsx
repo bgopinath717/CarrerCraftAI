@@ -1,9 +1,11 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '../common/SocialIcons';
+import { useAuth } from '../../context/AuthContext';
 
 export const ResumeTemplate = ({ resume, template = 'classic-ats' }) => {
   if (!resume) return null;
+  const { user } = useAuth();
 
   const {
     personalInfo = {},
@@ -25,7 +27,7 @@ export const ResumeTemplate = ({ resume, template = 'classic-ats' }) => {
     <div className={`resume-paper ${templateClass}`} id="resume-printable-area">
       {/* Header / Personal Details */}
       <header className="resume-header">
-        <h1 className="resume-name">{personalInfo.fullName || "Your Name"}</h1>
+        <h1 className="resume-name">{personalInfo.fullName || user?.name || "Your Name"}</h1>
         {currentTemplate !== 'classic-ats' && personalInfo.title && (
           <div className="resume-title">{personalInfo.title}</div>
         )}
@@ -265,6 +267,26 @@ export const ResumeTemplate = ({ resume, template = 'classic-ats' }) => {
             {interests.join(', ')}
           </div>
         </section>
+      )}
+
+      {/* Clean guide on paper for newly created empty resumes */}
+      {!summary && (!experience || experience.length === 0) && (!education || education.length === 0) && (!projects || projects.length === 0) && (!skills || Object.values(skills).flat().length === 0) && (
+        <div className="no-print" style={{
+          padding: '2.5rem 1.5rem',
+          textAlign: 'center',
+          color: '#64748b',
+          border: '1.5px dashed #cbd5e1',
+          borderRadius: '8px',
+          marginTop: '2.5rem',
+          backgroundColor: '#f8fafc'
+        }}>
+          <p style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: '0.4rem', fontFamily: 'system-ui, sans-serif' }}>
+            Your Resume Canvas is Ready
+          </p>
+          <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '480px', margin: '0 auto', lineHeight: '1.5', fontFamily: 'system-ui, sans-serif' }}>
+            Use the form on the left to enter your Professional Summary, Work Experience, Education, and Skills. The preview updates instantly in real time.
+          </p>
+        </div>
       )}
     </div>
   );

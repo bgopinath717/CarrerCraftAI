@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      default: 'Software Developer',
+      default: 'user',
     },
     avatar: {
       type: String,
