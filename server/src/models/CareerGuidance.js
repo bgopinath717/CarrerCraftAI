@@ -39,3 +39,4 @@ careerGuidanceSchema.set('toJSON', {
 });
 
 export const CareerGuidance = mongoose.model('CareerGuidance', careerGuidanceSchema);
+

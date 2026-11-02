@@ -19,3 +19,4 @@ router.post('/analyze', optionalProtect, upload.any(), analyzeUploadedATS);
 router.get('/:id', protect, getAtsById);
 
 export default router;
+

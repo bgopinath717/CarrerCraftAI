@@ -41,3 +41,4 @@ userSettingsSchema.set('toJSON', {
 });
 
 export const UserSettings = mongoose.model('UserSettings', userSettingsSchema);
+

@@ -69,3 +69,4 @@ atsAnalysisSchema.set('toJSON', {
 });
 
 export const ATSAnalysis = mongoose.model('ATSAnalysis', atsAnalysisSchema);
+
