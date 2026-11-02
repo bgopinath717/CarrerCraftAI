@@ -36,10 +36,10 @@ import Button from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { useToast } from '../components/common/Toast';
 
-const SAMPLE_RESUME_TEXT = `B. Gopinath
-Senior Full Stack MERN Developer | Chennai, India
-Email: gopinath@example.com | Phone: +91 98765 43210
-LinkedIn: https://linkedin.com/in/gopinath-mern | GitHub: https://github.com/gopinath-dev
+const SAMPLE_RESUME_TEXT = `Alex Morgan
+Full Stack Software Developer | San Francisco, CA
+Email: alex.morgan@example.com | Phone: +1 (555) 012-3456
+LinkedIn: https://linkedin.com/in/alex-morgan | GitHub: https://github.com/alex-morgan
 
 PROFESSIONAL SUMMARY
 Senior MERN Stack Engineer with 4+ years of hands-on expertise building enterprise web applications, RESTful microservices, and reactive user interfaces using React, Node.js, Express, and MongoDB.
@@ -110,38 +110,31 @@ export const PortfolioBuilderPage = () => {
   // Manual Entry Editable State
   const [manualData, setManualData] = useState(() => ({
     personalInfo: {
-      fullName: profile?.personalInfo?.fullName || 'B. Gopinath',
-      title: profile?.personalInfo?.title || 'Senior Full Stack MERN Developer',
-      email: profile?.personalInfo?.email || 'gopinath@example.com',
-      phone: profile?.personalInfo?.phone || '+91 98765 43210',
-      location: profile?.personalInfo?.location || 'Chennai, India',
-      github: profile?.personalInfo?.github || 'https://github.com/gopinath-dev',
-      linkedin: profile?.personalInfo?.linkedin || 'https://linkedin.com/in/gopinath-mern',
+      fullName: profile?.personalInfo?.fullName || user?.name || '',
+      title: profile?.personalInfo?.title || 'Software Developer',
+      email: profile?.personalInfo?.email || user?.email || '',
+      phone: profile?.personalInfo?.phone || '',
+      location: profile?.personalInfo?.location || '',
+      github: profile?.personalInfo?.github || '',
+      linkedin: profile?.personalInfo?.linkedin || '',
       website: profile?.personalInfo?.website || ''
     },
-    tagline: portfolioSettings?.tagline || 'Senior MERN Stack Engineer with 4+ years of hands-on expertise building enterprise web applications.',
+    tagline: portfolioSettings?.tagline || 'Software Engineer building modern web platforms.',
     customBio: portfolioSettings?.customBio || profile?.careerInfo?.summary || 'Passionate software engineer with hands-on experience developing modern web platforms, solving complex technical challenges, and delivering clean, maintainable code.',
     skills: {
       technical: [...(profile?.skills?.technical || ['JavaScript', 'TypeScript', 'Node.js', 'HTML5', 'CSS3'])],
-      frameworks: [...(profile?.skills?.frameworks || ['React.js', 'Express.js', 'Redux Toolkit', 'Tailwind CSS'])],
-      databases: [...(profile?.skills?.databases || ['MongoDB', 'PostgreSQL', 'Redis'])],
-      tools: [...(profile?.skills?.tools || ['Git', 'GitHub', 'Docker', 'AWS', 'Postman'])],
-      soft: [...(profile?.skills?.soft || ['Agile & Scrum', 'Team Leadership', 'Problem Solving'])]
+      frameworks: [...(profile?.skills?.frameworks || ['React.js', 'Express.js', 'Tailwind CSS'])],
+      databases: [...(profile?.skills?.databases || ['MongoDB', 'PostgreSQL'])],
+      tools: [...(profile?.skills?.tools || ['Git', 'GitHub', 'Docker', 'Postman'])],
+      soft: [...(profile?.skills?.soft || ['Agile & Scrum', 'Team Collaboration', 'Problem Solving'])]
     },
     projects: (profile?.projects || []).length > 0 ? JSON.parse(JSON.stringify(profile.projects)) : [
       {
-        name: 'CareerCraft AI Platform',
-        description: 'Full-stack SaaS application for ATS-friendly resume generation, automated keyword scoring, cover letter creation, and AI portfolio website generation.',
-        technologies: ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Tailwind CSS', 'JWT'],
-        link: 'https://careercraft.ai',
-        github: 'https://github.com/gopinath-dev/careercraft-ai'
-      },
-      {
-        name: 'E-Commerce Web Application',
-        description: 'Scalable multi-vendor e-commerce platform with product filtering, shopping cart state management, and Stripe payment gateway.',
-        technologies: ['React.js', 'Redux Toolkit', 'Node.js', 'Express', 'MongoDB'],
+        name: 'Cloud Management Dashboard',
+        description: 'Scalable web application for real-time system monitoring, metric visualizations, and administrative user controls.',
+        technologies: ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Tailwind CSS'],
         link: '',
-        github: 'https://github.com/gopinath-dev/ecommerce-mern'
+        github: 'https://github.com/example/cloud-dashboard'
       }
     ],
     experience: (profile?.experience || []).length > 0 ? JSON.parse(JSON.stringify(profile.experience)) : [
@@ -202,7 +195,8 @@ export const PortfolioBuilderPage = () => {
   };
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/portfolio/${portfolioSettings.slug || 'gopinath'}`;
+    const slug = portfolioSettings.slug || (user?.name ? user.name.toLowerCase().replace(/[^a-z0-9]/g, '-') : 'developer');
+    const url = `${window.location.origin}/portfolio/${slug}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     addToast('Shareable portfolio link copied to clipboard!', 'success');
@@ -569,8 +563,8 @@ export const PortfolioBuilderPage = () => {
         // Also synchronize manual editing state with extracted data
         setManualData({
           personalInfo: {
-            fullName: newProfile.personalInfo?.fullName || 'B. Gopinath',
-            title: newProfile.personalInfo?.title || 'Senior Full Stack MERN Developer',
+            fullName: newProfile.personalInfo?.fullName || user?.name || 'Developer',
+            title: newProfile.personalInfo?.title || 'Software Developer',
             email: newProfile.personalInfo?.email || '',
             phone: newProfile.personalInfo?.phone || '',
             location: newProfile.personalInfo?.location || '',
@@ -638,7 +632,7 @@ export const PortfolioBuilderPage = () => {
           <Button variant="outline" size="md" icon={copied ? Check : Copy} onClick={handleCopyLink}>
             {copied ? 'Copied Link' : 'Copy Portfolio Link'}
           </Button>
-          <Link to={`/portfolio/${portfolioSettings.slug || 'gopinath'}`} target="_blank">
+          <Link to={`/portfolio/${portfolioSettings.slug || ''}`} target="_blank">
             <Button variant="secondary" size="md" icon={ExternalLink}>
               Preview Live Site
             </Button>
@@ -957,7 +951,7 @@ export const PortfolioBuilderPage = () => {
                       ...manualData,
                       personalInfo: { ...manualData.personalInfo, fullName: e.target.value }
                     })}
-                    placeholder="e.g. B. Gopinath"
+                    placeholder="e.g. John Doe"
                   />
                 </div>
 
@@ -971,7 +965,7 @@ export const PortfolioBuilderPage = () => {
                       ...manualData,
                       personalInfo: { ...manualData.personalInfo, title: e.target.value }
                     })}
-                    placeholder="e.g. Senior Full Stack MERN Developer"
+                    placeholder="e.g. Software Developer"
                   />
                 </div>
 
@@ -985,7 +979,7 @@ export const PortfolioBuilderPage = () => {
                       ...manualData,
                       personalInfo: { ...manualData.personalInfo, email: e.target.value }
                     })}
-                    placeholder="e.g. gopinath@example.com"
+                    placeholder="e.g. john@example.com"
                   />
                 </div>
 
@@ -1631,7 +1625,7 @@ export const PortfolioBuilderPage = () => {
               >
                 Download Source (.zip)
               </Button>
-              <Link to={`/portfolio/${portfolioSettings.slug || 'gopinath'}`} target="_blank">
+              <Link to={`/portfolio/${portfolioSettings.slug || ''}`} target="_blank">
                 <Button variant="secondary" size="sm" icon={ExternalLink}>
                   Open Live Website
                 </Button>
@@ -2039,10 +2033,10 @@ export const PortfolioBuilderPage = () => {
                 className="input-field"
                 value={portfolioSettings.slug || ''}
                 onChange={(e) => setPortfolioSettings({ ...portfolioSettings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '') })}
-                placeholder="gopinath"
+                placeholder="your-custom-slug"
               />
             </div>
-            <div className="input-helper">This creates your unique public URL: /portfolio/{portfolioSettings.slug || 'gopinath'}</div>
+            <div className="input-helper">This creates your unique public URL: /portfolio/{portfolioSettings.slug || 'your-slug'}</div>
           </div>
 
           <div>
@@ -2118,7 +2112,7 @@ export const PortfolioBuilderPage = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Interactive Site Preview</h3>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <Link to={`/portfolio/${portfolioSettings.slug || 'gopinath'}`} target="_blank">
+              <Link to={`/portfolio/${portfolioSettings.slug || ''}`} target="_blank">
                 <Button variant="outline" size="sm" icon={Eye}>Full Page Preview</Button>
               </Link>
             </div>
@@ -2158,7 +2152,7 @@ export const PortfolioBuilderPage = () => {
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
               </div>
               <span style={{ marginLeft: 'auto', marginRight: 'auto', fontWeight: 600 }}>
-                careercraft.ai/portfolio/{portfolioSettings.slug || 'gopinath'}
+                careercraft.ai/portfolio/{portfolioSettings.slug || 'your-slug'}
               </span>
             </div>
 
@@ -2177,7 +2171,7 @@ export const PortfolioBuilderPage = () => {
                 fontWeight: 800,
                 boxShadow: '0 8px 16px rgba(7, 159, 232, 0.25)'
               }}>
-                {getInitials(profile?.personalInfo?.fullName || 'B. Gopinath')}
+                {getInitials(profile?.personalInfo?.fullName || user?.name || 'Dev')}
               </div>
               <div>
                 <h4 style={{ fontSize: '1.125rem', fontWeight: 800 }}>

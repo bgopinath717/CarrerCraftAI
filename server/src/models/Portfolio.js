@@ -7,6 +7,11 @@ const portfolioSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
       unique: true,
+      index: true,
+    },
+    portfolioTitle: {
+      type: String,
+      default: 'My Professional Portfolio',
     },
     slug: {
       type: String,
@@ -15,7 +20,6 @@ const portfolioSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       index: true,
-      default: 'gopinath',
     },
     theme: {
       type: String,
@@ -23,7 +27,7 @@ const portfolioSchema = new mongoose.Schema(
     },
     tagline: {
       type: String,
-      default: 'I build modern web applications using MongoDB, Express.js, React.js and Node.js.',
+      default: 'Passionate developer building modern scalable applications.',
     },
     customBio: {
       type: String,
@@ -35,16 +39,44 @@ const portfolioSchema = new mongoose.Schema(
     },
     accentColor: {
       type: String,
-      default: '#6366f1',
+      default: '#2196D3',
     },
     isPublic: {
       type: Boolean,
       default: true,
+    },
+    personalDetails: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    projects: {
+      type: Array,
+      default: [],
+    },
+    skills: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    experience: {
+      type: Array,
+      default: [],
+    },
+    education: {
+      type: Array,
+      default: [],
     },
   },
   {
     timestamps: true,
   }
 );
+
+portfolioSchema.set('toJSON', {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    return ret;
+  },
+});
 
 export const Portfolio = mongoose.model('Portfolio', portfolioSchema);

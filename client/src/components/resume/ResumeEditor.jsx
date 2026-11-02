@@ -217,7 +217,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.fullName || ''}
                   onChange={(e) => updatePersonalInfo('fullName', e.target.value)}
-                  placeholder="e.g. B. Gopinath"
+                  placeholder="e.g. John Doe"
                 />
               </div>
               <div>
@@ -227,7 +227,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.title || ''}
                   onChange={(e) => updatePersonalInfo('title', e.target.value)}
-                  placeholder="e.g. MERN Stack Developer"
+                  placeholder="e.g. Software Developer"
                 />
               </div>
               <div>
@@ -237,7 +237,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.email || ''}
                   onChange={(e) => updatePersonalInfo('email', e.target.value)}
-                  placeholder="e.g. gopinath@example.com"
+                  placeholder="e.g. john@example.com"
                 />
               </div>
               <div>
@@ -247,7 +247,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.phone || ''}
                   onChange={(e) => updatePersonalInfo('phone', e.target.value)}
-                  placeholder="e.g. +91 98765 43210"
+                  placeholder="e.g. +1 (555) 012-3456"
                 />
               </div>
               <div>
@@ -257,7 +257,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.location || ''}
                   onChange={(e) => updatePersonalInfo('location', e.target.value)}
-                  placeholder="e.g. Chennai, Tamil Nadu, India"
+                  placeholder="e.g. New York, NY"
                 />
               </div>
               <div>
@@ -267,7 +267,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.linkedin || ''}
                   onChange={(e) => updatePersonalInfo('linkedin', e.target.value)}
-                  placeholder="e.g. https://linkedin.com/in/gopinath-mern"
+                  placeholder="e.g. https://linkedin.com/in/username"
                 />
               </div>
               <div>
@@ -277,7 +277,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.github || ''}
                   onChange={(e) => updatePersonalInfo('github', e.target.value)}
-                  placeholder="e.g. https://github.com/gopinath-dev"
+                  placeholder="e.g. https://github.com/username"
                 />
               </div>
               <div>
@@ -287,7 +287,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                   className="input-field"
                   value={resume.personalInfo?.website || ''}
                   onChange={(e) => updatePersonalInfo('website', e.target.value)}
-                  placeholder="e.g. https://careercraft-ai.dev/portfolio/gopinath"
+                  placeholder="e.g. https://yourportfolio.dev"
                 />
               </div>
             </div>
@@ -628,7 +628,7 @@ export const ResumeEditor = ({ resume, onChange, onSave }) => {
                         updated[idx].githubUrl = e.target.value;
                         updateField('projects', updated);
                       }}
-                      placeholder="https://github.com/gopinath-dev/project"
+                      placeholder="https://github.com/username/project"
                     />
                   </div>
                   <div>

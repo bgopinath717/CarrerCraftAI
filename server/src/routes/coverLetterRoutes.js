@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   getCoverLetters,
+  getCoverLetterById,
   createCoverLetter,
   updateCoverLetter,
   deleteCoverLetter,
@@ -12,6 +13,7 @@ const router = express.Router();
 router.use(protect);
 router.get('/', getCoverLetters);
 router.post('/', createCoverLetter);
+router.get('/:id', getCoverLetterById);
 router.put('/:id', updateCoverLetter);
 router.delete('/:id', deleteCoverLetter);
 

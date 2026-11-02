@@ -171,14 +171,14 @@ export const Sidebar = ({ isOpen, onClose }) => {
               fontSize: '0.875rem',
               flexShrink: 0
             }}>
-              {user?.name ? user.name.charAt(0) : 'G'}
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div style={{ overflow: 'hidden' }}>
               <div style={{ fontSize: '0.8125rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.name || 'B. Gopinath'}
+                {user?.name || 'User'}
               </div>
               <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.role || 'MERN Stack Dev'}
+                {user?.role || 'Developer'}
               </div>
             </div>
           </div>

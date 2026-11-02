@@ -11,15 +11,18 @@ const coverLetterSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
-      default: 'Full Stack Developer Cover Letter',
+      default: 'My Cover Letter',
+      trim: true,
     },
     jobTitle: {
       type: String,
-      default: 'MERN Stack Developer',
+      default: 'Software Developer',
+      trim: true,
     },
     companyName: {
       type: String,
-      default: 'Tech Innovations Inc.',
+      default: 'Hiring Company',
+      trim: true,
     },
     jobDescription: {
       type: String,

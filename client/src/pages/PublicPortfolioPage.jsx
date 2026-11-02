@@ -11,30 +11,43 @@ import {
 } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '../components/common/SocialIcons';
 import { storageService } from '../services/storageService';
-import { sampleUserData } from '../data/sampleUserData';
 import Button from '../components/common/Button';
 import { apiService } from '../services/api';
 
 export const PublicPortfolioPage = () => {
   const { slug } = useParams();
-  const [profile, setProfile] = useState(() => storageService.getProfile());
-  const [portfolioSettings, setPortfolioSettings] = useState(() => storageService.getPortfolioSettings());
+  const [profile, setProfile] = useState(null);
+  const [portfolioSettings, setPortfolioSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
 
     let isMounted = true;
-    apiService.getPublicPortfolio(slug || 'gopinath').then((res) => {
-      if (!isMounted) return;
-      if (res?.profile) {
-        setProfile(res.profile);
-      }
-      if (res?.portfolioSettings) {
-        setPortfolioSettings(res.portfolioSettings);
-      }
-    }).catch((err) => {
-      console.warn('Error loading dynamic public portfolio, using local fallback:', err);
-    });
+    if (!slug) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    apiService
+      .getPublicPortfolio(slug)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res?.success && res?.portfolioSettings) {
+          setProfile(res.profile || {});
+          setPortfolioSettings(res.portfolioSettings);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setNotFound(true);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
     return () => {
       isMounted = false;
@@ -109,6 +122,41 @@ export const PublicPortfolioPage = () => {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#64748B' }}>Loading portfolio...</p>
+      </div>
+    );
+  }
+
+  if (notFound || !portfolioSettings) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+          textAlign: 'center',
+          backgroundColor: '#F8FAFC',
+        }}
+      >
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0B3A5B', marginBottom: '0.75rem' }}>
+          Portfolio Not Found
+        </h1>
+        <p style={{ color: '#64748B', maxWidth: '440px', marginBottom: '1.5rem' }}>
+          The portfolio you are looking for does not exist or has been made private.
+        </p>
+        <Link to="/">
+          <Button variant="primary">Return to Home</Button>
+        </Link>
+      </div>
+    );
+  }
+
   const {
     personalInfo = {},
     careerInfo = {},
@@ -118,7 +166,7 @@ export const PublicPortfolioPage = () => {
     projects = [],
     certifications = [],
     achievements = []
-  } = profile || sampleUserData || {};
+  } = profile || {};
 
   const displayName = personalInfo.fullName || 'Developer';
   const displayTitle = personalInfo.title || careerInfo.targetRole || '';

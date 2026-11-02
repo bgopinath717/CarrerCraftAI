@@ -102,8 +102,8 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/portfolio/gopinath" style={{ color: '#64748B', transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => e.target.style.color = '#2196D3'} onMouseLeave={(e) => e.target.style.color = '#64748B'}>
-                  Public Portfolio Demo
+                <Link to="/portfolio" style={{ color: '#64748B', transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => e.target.style.color = '#2196D3'} onMouseLeave={(e) => e.target.style.color = '#64748B'}>
+                  Developer Portfolios
                 </Link>
               </li>
               <li>

@@ -21,7 +21,7 @@ import { ProgressBar } from '../components/common/Badge';
 import { useToast } from '../components/common/Toast';
 
 export const ProfilePage = () => {
-  const { profile, completionPercentage, updateProfile, resetToSample } = useProfile();
+  const { profile, completionPercentage, updateProfile, resetToEmpty } = useProfile();
   const [formData, setFormData] = useState(profile);
   const [activeTab, setActiveTab] = useState('personal');
   const { addToast } = useToast();
@@ -41,9 +41,9 @@ export const ProfilePage = () => {
   };
 
   const handleReset = () => {
-    const res = resetToSample();
+    const res = resetToEmpty();
     setFormData(res);
-    addToast('Profile reset to B. Gopinath sample data', 'info');
+    addToast('Profile reset to clean state', 'info');
   };
 
   const updatePersonal = (field, val) => {
@@ -74,7 +74,7 @@ export const ProfilePage = () => {
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <Button variant="secondary" size="md" icon={RotateCcw} onClick={handleReset}>
-            Reset to Sample
+            Reset Profile
           </Button>
           <Button variant="primary" size="md" icon={Save} onClick={handleSave}>
             Save Profile

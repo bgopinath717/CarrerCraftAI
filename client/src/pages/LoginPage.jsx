@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react';
+import { Mail, Lock, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import { Card } from '../components/common/Card';
@@ -11,45 +11,71 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
-  const { login, loginDemoUser } = useAuth();
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const { login, forgotPassword, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
 
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      addToast('Please enter both email and password', 'warning');
+    if (!email.trim() || !password) {
+      addToast('Please enter both email address and password', 'warning');
       return;
     }
 
     setLoading(true);
-    const res = await login(email, password);
+    const res = await login(email.trim(), password, rememberMe);
     setLoading(false);
 
     if (res.success) {
       addToast(`Welcome back, ${res.user?.name || 'User'}!`, 'success');
       navigate('/dashboard');
     } else {
-      addToast(res.message || 'Invalid credentials', 'danger');
+      addToast(res.message || 'Invalid email or password', 'danger');
     }
   };
 
-  const handleDemoLogin = () => {
-    loginDemoUser();
-    addToast('Logged in as B. Gopinath (Demo Mode)', 'success');
-    navigate('/dashboard');
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      addToast('Please enter your email address', 'warning');
+      return;
+    }
+
+    setForgotLoading(true);
+    const res = await forgotPassword(forgotEmail.trim());
+    setForgotLoading(false);
+
+    if (res.success) {
+      addToast(res.message || 'Password reset link sent to your email', 'success');
+      setShowForgotModal(false);
+      setForgotEmail('');
+    } else {
+      addToast(res.message || 'Failed to request password reset', 'danger');
+    }
   };
 
   return (
-    <div style={{
-      minHeight: '80vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem 1rem'
-    }}>
+    <div
+      style={{
+        minHeight: '80vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem 1rem',
+      }}
+    >
       <div style={{ width: '100%', maxWidth: '440px' }}>
-        
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img
@@ -59,55 +85,26 @@ export const LoginPage = () => {
               width: '3.5rem',
               height: '3.5rem',
               objectFit: 'contain',
-              marginBottom: '1rem'
+              marginBottom: '1rem',
             }}
           />
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-dark-blue)' }}>
+          <h1
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              marginBottom: '0.5rem',
+              color: 'var(--color-dark-blue)',
+            }}
+          >
             Welcome Back
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Log in to manage your resumes, portfolio, and career plans
+            Log in to manage your resumes, portfolio, and career plans.
           </p>
         </div>
 
         {/* Form Card */}
         <Card elevated style={{ padding: '2rem' }}>
-          
-          {/* Quick 1-Click Demo Login Banner */}
-          <div style={{
-            padding: '0.875rem',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--color-bg-light)',
-            border: '1px solid var(--color-border)',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.5rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--primary-600)' }}>
-              <UserCheck size={16} />
-              <span>Instant Review Mode</span>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Evaluate the complete MERN application preloaded with <strong>B. Gopinath's</strong> profile and projects.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              icon={Sparkles}
-              onClick={handleDemoLogin}
-              style={{ width: '100%', marginTop: '0.25rem' }}
-            >
-              1-Click Login as B. Gopinath
-            </Button>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Or enter details</span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
-          </div>
-
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
               <label className="input-label">Email Address</label>
@@ -117,23 +114,45 @@ export const LoginPage = () => {
                   type="email"
                   className="input-field"
                   style={{ paddingLeft: '2.5rem' }}
-                  placeholder="gopinath@example.com"
+                  placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
                 />
               </div>
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
-                <label className="input-label" style={{ margin: 0 }}>Password</label>
-                <a
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); addToast('Password reset link sent to demo email.', 'info'); }}
-                  style={{ fontSize: '0.75rem', color: 'var(--primary-600)', fontWeight: 600 }}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.375rem',
+                }}
+              >
+                <label className="input-label" style={{ margin: 0 }}>
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotEmail(email);
+                    setShowForgotModal(true);
+                  }}
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--primary-600)',
+                    fontWeight: 600,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
                 >
                   Forgot password?
-                </a>
+                </button>
               </div>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.875rem' }} />
@@ -144,6 +163,8 @@ export const LoginPage = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
                 />
               </div>
             </div>
@@ -157,7 +178,7 @@ export const LoginPage = () => {
                 style={{ cursor: 'pointer' }}
               />
               <label htmlFor="remember" style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                Remember me for 30 days
+                Remember me
               </label>
             </div>
 
@@ -173,15 +194,84 @@ export const LoginPage = () => {
             </Button>
           </form>
 
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          <div
+            style={{
+              textAlign: 'center',
+              marginTop: '1.5rem',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)',
+            }}
+          >
             Don't have an account?{' '}
             <Link to="/register" style={{ color: 'var(--primary-600)', fontWeight: 700 }}>
               Create Account
             </Link>
           </div>
         </Card>
-
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 100,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '2rem',
+              maxWidth: '420px',
+              width: '100%',
+              boxShadow: 'var(--shadow-xl)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-dark-blue)', margin: 0 }}>
+                Reset Your Password
+              </h3>
+              <button
+                onClick={() => setShowForgotModal(false)}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+              Enter your registered email address and we will send you instructions to reset your password.
+            </p>
+            <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label className="input-label">Email Address</label>
+                <input
+                  type="email"
+                  className="input-field"
+                  placeholder="your.email@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <Button variant="ghost" type="button" onClick={() => setShowForgotModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit" loading={forgotLoading}>
+                  Send Reset Link
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

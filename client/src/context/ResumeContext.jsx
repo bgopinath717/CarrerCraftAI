@@ -2,105 +2,164 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { storageService } from '../services/storageService';
 import { atsEngine } from '../services/atsEngine';
 import { apiService } from '../services/api';
+import { useAuth } from './AuthContext';
+import { useProfile } from './ProfileContext';
 
 const ResumeContext = createContext();
 
 export const ResumeProvider = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  const { profile } = useProfile();
   const [resumes, setResumes] = useState(() => storageService.getResumes());
   const [activeResume, setActiveResume] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Sync with backend on mount
+  // Sync with backend on mount and auth state change
   useEffect(() => {
-    apiService.getResumes().then((res) => {
-      if (res?.resumes && res.resumes.length > 0) {
-        setResumes(res.resumes);
-      }
-    }).catch(() => {
-      setResumes(storageService.getResumes());
-    });
-  }, []);
+    if (isAuthenticated) {
+      setLoading(true);
+      apiService
+        .getResumes()
+        .then((res) => {
+          if (res?.resumes) {
+            setResumes(res.resumes);
+            storageService.saveResumes(res.resumes);
+            if (res.resumes.length > 0 && !activeResume) {
+              setActiveResume(res.resumes[0]);
+            }
+          }
+        })
+        .catch(() => {
+          setResumes(storageService.getResumes());
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setResumes([]);
+      setActiveResume(null);
+    }
+  }, [isAuthenticated, user?.id]);
 
-  const saveResume = (resumeData) => {
-    // Recalculate ATS score before saving
+  const saveResume = async (resumeData) => {
     const atsResult = atsEngine.analyzeResume(resumeData);
     const resumeWithScore = {
       ...resumeData,
-      atsScore: atsResult.score,
-      updatedAt: new Date().toISOString()
+      atsScore: atsResult?.score || 0,
+      updatedAt: new Date().toISOString(),
     };
-    const saved = storageService.saveResume(resumeWithScore);
+
+    // Save locally first for optimistic UI response
+    const savedLocal = storageService.saveResume(resumeWithScore);
     setResumes(storageService.getResumes());
-    if (activeResume && activeResume.id === saved.id) {
-      setActiveResume(saved);
+    if (activeResume && (activeResume.id === savedLocal.id || activeResume._id === savedLocal.id)) {
+      setActiveResume(savedLocal);
     }
-    // Asynchronously sync with MongoDB backend
-    apiService.saveResume(resumeWithScore).catch(() => {});
-    return saved;
+
+    // Persist to MongoDB backend
+    try {
+      const res = await apiService.saveResume(resumeWithScore);
+      if (res?.resume) {
+        const persisted = res.resume;
+        storageService.saveResume(persisted);
+        setResumes(storageService.getResumes());
+        if (activeResume && (activeResume.id === savedLocal.id || activeResume.id === persisted.id)) {
+          setActiveResume(persisted);
+        }
+        return persisted;
+      }
+    } catch (e) {
+      console.error('[Resume Save Error]:', e);
+    }
+    return savedLocal;
   };
 
-  const deleteResume = (id) => {
+  const deleteResume = async (id) => {
     storageService.deleteResume(id);
-    setResumes(storageService.getResumes());
-    if (activeResume && activeResume.id === id) {
-      setActiveResume(null);
+    const updated = storageService.getResumes();
+    setResumes(updated);
+    if (activeResume && (activeResume.id === id || activeResume._id === id)) {
+      setActiveResume(updated.length > 0 ? updated[0] : null);
     }
-    apiService.deleteResume(id).catch(() => {});
+    try {
+      await apiService.deleteResume(id);
+    } catch (e) {
+      console.error('[Resume Delete Error]:', e);
+    }
   };
 
-  const duplicateResume = (id) => {
+  const duplicateResume = async (id) => {
+    try {
+      const res = await apiService.duplicateResume(id);
+      if (res?.resume) {
+        storageService.saveResume(res.resume);
+        setResumes(storageService.getResumes());
+        return res.resume;
+      }
+    } catch {
+      // fallback to local duplication
+    }
     const copy = storageService.duplicateResume(id);
     setResumes(storageService.getResumes());
-    if (copy) {
-      apiService.saveResume(copy).catch(() => {});
-    }
     return copy;
   };
 
   const createNewResume = (initialData = null) => {
-    const profile = storageService.getProfile();
+    const prof = profile || storageService.getProfile();
     const newResume = {
-      id: `res-${Date.now()}`,
-      title: initialData?.title || "New ATS Resume",
-      template: initialData?.template || "classic-ats",
-      targetRole: profile?.careerInfo?.targetRole || "MERN Stack Developer",
-      personalInfo: { ...(initialData?.personalInfo || profile?.personalInfo) },
-      summary: initialData?.summary || profile?.careerInfo?.summary || "",
-      education: [...(initialData?.education || profile?.education || [])],
-      experience: [...(initialData?.experience || profile?.experience || [])],
-      skills: { ...(initialData?.skills || profile?.skills || {}) },
-      projects: [...(initialData?.projects || profile?.projects || [])],
-      certifications: [...(initialData?.certifications || profile?.certifications || [])],
-      achievements: [...(initialData?.achievements || profile?.achievements || [])],
-      languages: [...(initialData?.languages || profile?.languages || [])],
-      interests: [...(initialData?.interests || profile?.interests || [])],
-      atsScore: 85,
-      status: "Draft",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      title: initialData?.title || `${user?.name || 'My'} ATS Resume`,
+      template: initialData?.template || 'classic-ats',
+      targetRole: initialData?.targetRole || prof?.careerInfo?.targetRole || 'Software Developer',
+      personalInfo: {
+        fullName: initialData?.personalInfo?.fullName || prof?.personalInfo?.fullName || user?.name || '',
+        title: initialData?.personalInfo?.title || prof?.personalInfo?.title || 'Software Developer',
+        email: initialData?.personalInfo?.email || prof?.personalInfo?.email || user?.email || '',
+        phone: initialData?.personalInfo?.phone || prof?.personalInfo?.phone || '',
+        location: initialData?.personalInfo?.location || prof?.personalInfo?.location || '',
+        linkedin: initialData?.personalInfo?.linkedin || prof?.personalInfo?.linkedin || '',
+        github: initialData?.personalInfo?.github || prof?.personalInfo?.github || '',
+        website: initialData?.personalInfo?.website || prof?.personalInfo?.website || '',
+      },
+      summary: initialData?.summary || prof?.careerInfo?.summary || '',
+      education: [...(initialData?.education || prof?.education || [])],
+      experience: [...(initialData?.experience || prof?.experience || [])],
+      skills: { ...(initialData?.skills || prof?.skills || {}) },
+      projects: [...(initialData?.projects || prof?.projects || [])],
+      certifications: [...(initialData?.certifications || prof?.certifications || [])],
+      achievements: [...(initialData?.achievements || prof?.achievements || [])],
+      languages: [...(initialData?.languages || prof?.languages || [])],
+      interests: [...(initialData?.interests || prof?.interests || [])],
+      atsScore: 0,
+      status: 'Draft',
     };
     return saveResume(newResume);
   };
 
   const deleteAllResumes = () => {
+    const currentResumes = [...resumes];
     storageService.deleteAllResumes();
     setResumes([]);
     setActiveResume(null);
-    resumes.forEach(r => {
-      apiService.deleteResume(r.id).catch(() => {});
+    currentResumes.forEach((r) => {
+      const id = r._id || r.id;
+      if (id) apiService.deleteResume(id).catch(() => {});
     });
   };
 
   return (
-    <ResumeContext.Provider value={{
-      resumes,
-      activeResume,
-      setActiveResume,
-      saveResume,
-      deleteResume,
-      deleteAllResumes,
-      duplicateResume,
-      createNewResume
-    }}>
+    <ResumeContext.Provider
+      value={{
+        resumes,
+        activeResume,
+        setActiveResume,
+        saveResume,
+        deleteResume,
+        duplicateResume,
+        createNewResume,
+        deleteAllResumes,
+        loading,
+      }}
+    >
       {children}
     </ResumeContext.Provider>
   );

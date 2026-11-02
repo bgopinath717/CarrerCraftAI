@@ -327,7 +327,7 @@ export const SkillGapAnalysisPage = () => {
               }}
             >
               <option value="active-profile">
-                {profile?.personalInfo?.fullName || 'B. Gopinath'} (Active Profile)
+                {profile?.personalInfo?.fullName || 'My Profile'} (Active Profile)
               </option>
               {availableResumes.map(r => (
                 <option key={r.id} value={r.id}>

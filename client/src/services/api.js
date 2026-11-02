@@ -1,4 +1,4 @@
-// API Client Service with Axios & Standalone Mode Fallback
+// Production API Client Service with Axios for CareerCraft AI
 import axios from 'axios';
 import { storageService } from './storageService';
 
@@ -9,10 +9,11 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  withCredentials: true,
+  timeout: 45000,
 });
 
-// Request Interceptor: Attach JWT Bearer Token
+// Request Interceptor: Attach JWT Bearer Token if present
 apiClient.interceptors.request.use(
   (config) => {
     const token = storageService.getToken();
@@ -24,39 +25,36 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Graceful fallback to client storage if server is not yet online
+// Response Interceptor: Handle 401 Unauthorized cleanly
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (!error.response || error.code === 'ERR_NETWORK') {
-      console.info('Backend server unreachable. Operating in Standalone Frontend Fallback Mode.');
+    if (error.response?.status === 401) {
+      // If unauthorized on protected endpoint, do not redirect if it was a login attempt
+      if (!error.config.url.includes('/auth/login') && !error.config.url.includes('/auth/register')) {
+        // Token expired or invalid
+        // storageService.clearAuth();
+      }
     }
     return Promise.reject(error);
   }
 );
 
 export const apiService = {
-  // Auth
-  async login(email, password) {
+  // Authentication Endpoints
+  async login(email, password, rememberMe = true) {
     try {
-      const res = await apiClient.post('/auth/login', { email, password });
+      const res = await apiClient.post('/auth/login', { email, password, rememberMe });
       if (res.data?.token) {
         storageService.setToken(res.data.token);
         storageService.setUser(res.data.user);
       }
       return res.data;
-    } catch {
-      // Standalone simulation fallback
-      const user = {
-        id: "usr-gopinath-1",
-        name: email.includes('gopinath') ? "B. Gopinath" : email.split('@')[0],
-        email: email,
-        role: "MERN Stack Developer"
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed. Please check your credentials.',
       };
-      const token = "mock-jwt-token-" + Date.now();
-      storageService.setUser(user);
-      storageService.setToken(token);
-      return { success: true, user, token };
     }
   },
 
@@ -68,30 +66,78 @@ export const apiService = {
         storageService.setUser(res.data.user);
       }
       return res.data;
-    } catch {
-      const user = {
-        id: "usr-" + Date.now(),
-        name: name || "B. Gopinath",
-        email: email,
-        role: "MERN Stack Developer"
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Registration failed. Please try again.',
       };
-      const token = "mock-jwt-token-" + Date.now();
-      storageService.setUser(user);
-      storageService.setToken(token);
-      return { success: true, user, token };
     }
+  },
+
+  async logout() {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (e) {
+      // continue clearing local storage even if network fails
+    } finally {
+      storageService.clearAuth();
+    }
+    return { success: true };
   },
 
   async getMe() {
     try {
       const res = await apiClient.get('/auth/me');
+      if (res.data?.user) {
+        storageService.setUser(res.data.user);
+      }
       return res.data;
-    } catch {
-      return { success: true, user: storageService.getUser() };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to authenticate user.',
+      };
     }
   },
 
-  // Profile
+  async forgotPassword(email) {
+    try {
+      const res = await apiClient.post('/auth/forgot-password', { email });
+      return res.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Unable to process forgot password request.',
+      };
+    }
+  },
+
+  async resetPassword(token, newPassword) {
+    try {
+      const res = await apiClient.post('/auth/reset-password', { token, newPassword });
+      return res.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Password reset failed.',
+      };
+    }
+  },
+
+  // Dashboard Statistics & User Data
+  async getDashboard() {
+    try {
+      const res = await apiClient.get('/dashboard');
+      return res.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to load dashboard data.',
+      };
+    }
+  },
+
+  // Profile Management
   async getProfile() {
     try {
       const res = await apiClient.get('/profile');
@@ -99,8 +145,9 @@ export const apiService = {
         storageService.saveProfile(res.data.profile);
       }
       return res.data;
-    } catch {
-      return { success: true, profile: storageService.getProfile() };
+    } catch (error) {
+      const cached = storageService.getProfile();
+      return { success: !!cached, profile: cached };
     }
   },
 
@@ -110,18 +157,21 @@ export const apiService = {
       const saved = res.data?.profile || profile;
       storageService.saveProfile(saved);
       return { success: true, profile: saved };
-    } catch {
+    } catch (error) {
       const saved = storageService.saveProfile(profile);
       return { success: true, profile: saved };
     }
   },
 
-  // Resumes
+  // Resumes Management
   async getResumes() {
     try {
       const res = await apiClient.get('/resumes');
+      if (res.data?.resumes) {
+        storageService.saveResumes(res.data.resumes);
+      }
       return res.data;
-    } catch {
+    } catch (error) {
       return { success: true, resumes: storageService.getResumes() };
     }
   },
@@ -130,21 +180,24 @@ export const apiService = {
     try {
       const res = await apiClient.get(`/resumes/${id}`);
       return res.data;
-    } catch {
+    } catch (error) {
       return { success: true, resume: storageService.getResumeById(id) };
     }
   },
 
   async saveResume(resume) {
     try {
-      if (resume.id && !resume.id.startsWith('res-default') && !resume.id.startsWith('res-')) {
-        const res = await apiClient.put(`/resumes/${resume.id}`, resume);
-        return res.data;
+      const targetId = resume._id || (resume.id && !resume.id.startsWith('res-') ? resume.id : null);
+      let res;
+      if (targetId) {
+        res = await apiClient.put(`/resumes/${targetId}`, resume);
       } else {
-        const res = await apiClient.post('/resumes', resume);
-        return res.data;
+        res = await apiClient.post('/resumes', resume);
       }
-    } catch {
+      const saved = res.data?.resume || resume;
+      storageService.saveResume(saved);
+      return { success: true, resume: saved };
+    } catch (error) {
       const saved = storageService.saveResume(resume);
       return { success: true, resume: saved };
     }
@@ -152,25 +205,37 @@ export const apiService = {
 
   async deleteResume(id) {
     try {
-      const res = await apiClient.delete(`/resumes/${id}`);
+      await apiClient.delete(`/resumes/${id}`);
+    } catch (e) {
+      // Ignore network errors
+    } finally {
       storageService.deleteResume(id);
+    }
+    return { success: true };
+  },
+
+  async duplicateResume(id) {
+    try {
+      const res = await apiClient.post(`/resumes/${id}/duplicate`);
+      if (res.data?.resume) {
+        storageService.saveResume(res.data.resume);
+      }
       return res.data;
-    } catch {
-      storageService.deleteResume(id);
-      return { success: true };
+    } catch (error) {
+      const copy = storageService.duplicateResume(id);
+      return { success: true, resume: copy };
     }
   },
 
-  // Portfolio
-  async getPublicPortfolio(slug = 'gopinath') {
+  // Portfolio Management
+  async getPublicPortfolio(slug) {
     try {
       const res = await apiClient.get(`/portfolio/public/${slug}`);
       return res.data;
-    } catch {
+    } catch (error) {
       return {
-        success: true,
-        profile: storageService.getProfile(),
-        portfolioSettings: storageService.getPortfolioSettings()
+        success: false,
+        message: error.response?.data?.message || 'Portfolio not found',
       };
     }
   },
@@ -178,8 +243,11 @@ export const apiService = {
   async getPortfolioSettings() {
     try {
       const res = await apiClient.get('/portfolio');
+      if (res.data?.portfolioSettings) {
+        storageService.savePortfolioSettings(res.data.portfolioSettings);
+      }
       return res.data;
-    } catch {
+    } catch (error) {
       return { success: true, portfolioSettings: storageService.getPortfolioSettings() };
     }
   },
@@ -187,49 +255,50 @@ export const apiService = {
   async updatePortfolioSettings(settings) {
     try {
       const res = await apiClient.put('/portfolio', settings);
-      storageService.savePortfolioSettings(settings);
-      return res.data;
-    } catch {
+      const saved = res.data?.portfolioSettings || settings;
+      storageService.savePortfolioSettings(saved);
+      return { success: true, portfolioSettings: saved };
+    } catch (error) {
       const saved = storageService.savePortfolioSettings(settings);
       return { success: true, portfolioSettings: saved };
     }
   },
 
   async generatePortfolioFromResume(payload) {
-    if (payload instanceof FormData) {
-      const res = await apiClient.post('/portfolio/generate-from-resume', payload, {
-        headers: { 'Content-Type': undefined },
-        timeout: 45000,
-      });
-      return res.data;
-    } else {
-      const res = await apiClient.post('/portfolio/generate-from-resume', payload, {
-        timeout: 45000,
-      });
-      return res.data;
-    }
+    const isFormData = payload instanceof FormData;
+    const res = await apiClient.post('/portfolio/generate-from-resume', payload, {
+      headers: isFormData ? { 'Content-Type': undefined } : undefined,
+      timeout: 45000,
+    });
+    return res.data;
   },
 
-  // Cover Letters
+  // Cover Letters Management
   async getCoverLetters() {
     try {
       const res = await apiClient.get('/cover-letters');
+      if (res.data?.coverLetters) {
+        storageService.saveCoverLetters(res.data.coverLetters);
+      }
       return res.data;
-    } catch {
+    } catch (error) {
       return { success: true, coverLetters: storageService.getCoverLetters() };
     }
   },
 
   async saveCoverLetter(letter) {
     try {
-      if (letter.id && !letter.id.startsWith('cl-default') && !letter.id.startsWith('cl-')) {
-        const res = await apiClient.put(`/cover-letters/${letter.id}`, letter);
-        return res.data;
+      const targetId = letter._id || (letter.id && !letter.id.startsWith('cl-') ? letter.id : null);
+      let res;
+      if (targetId) {
+        res = await apiClient.put(`/cover-letters/${targetId}`, letter);
       } else {
-        const res = await apiClient.post('/cover-letters', letter);
-        return res.data;
+        res = await apiClient.post('/cover-letters', letter);
       }
-    } catch {
+      const saved = res.data?.coverLetter || letter;
+      storageService.saveCoverLetter(saved);
+      return { success: true, coverLetter: saved };
+    } catch (error) {
       const saved = storageService.saveCoverLetter(letter);
       return { success: true, coverLetter: saved };
     }
@@ -237,17 +306,76 @@ export const apiService = {
 
   async deleteCoverLetter(id) {
     try {
-      const res = await apiClient.delete(`/cover-letters/${id}`);
+      await apiClient.delete(`/cover-letters/${id}`);
+    } catch (e) {
+      // continue
+    } finally {
       storageService.deleteCoverLetter(id);
+    }
+    return { success: true };
+  },
+
+  // ATS Analysis Endpoints
+  async analyzeATS(payload) {
+    const isFormData = payload instanceof FormData;
+    const res = await apiClient.post('/ats/analyze', payload, {
+      headers: isFormData ? { 'Content-Type': undefined } : undefined,
+      timeout: 45000,
+    });
+    return res.data;
+  },
+
+  async getAtsHistory() {
+    try {
+      const res = await apiClient.get('/ats/history');
       return res.data;
-    } catch {
-      storageService.deleteCoverLetter(id);
-      return { success: true };
+    } catch (error) {
+      return { success: false, history: [] };
+    }
+  },
+
+  async getAtsById(id) {
+    try {
+      const res = await apiClient.get(`/ats/${id}`);
+      return res.data;
+    } catch (error) {
+      return { success: false, message: 'Analysis not found' };
+    }
+  },
+
+  // Settings Endpoints
+  async getSettings() {
+    try {
+      const res = await apiClient.get('/settings');
+      if (res.data?.settings) {
+        storageService.saveSettings(res.data.settings);
+      }
+      return res.data;
+    } catch (error) {
+      return { success: true, settings: storageService.getSettings() };
+    }
+  },
+
+  async updateSettings(settings) {
+    try {
+      const res = await apiClient.put('/settings', settings);
+      if (res.data?.settings) {
+        storageService.saveSettings(res.data.settings);
+      }
+      if (res.data?.user) {
+        storageService.setUser(res.data.user);
+      }
+      return res.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to update settings',
+      };
     }
   },
 
   // AI Intelligence Endpoints
-  async polishBullet(rawBullet, role = "Software Developer") {
+  async polishBullet(rawBullet, role = 'Software Developer') {
     try {
       const res = await apiClient.post('/ai/polish', { rawBullet, role });
       return res.data?.polished;
@@ -265,7 +393,7 @@ export const apiService = {
     }
   },
 
-  async suggestKeywords(targetRole = "MERN Stack Developer") {
+  async suggestKeywords(targetRole = 'Software Developer') {
     try {
       const res = await apiClient.post('/ai/keywords', { targetRole });
       return res.data?.keywords;
@@ -279,35 +407,20 @@ export const apiService = {
       if (resumeData instanceof FormData) {
         const res = await apiClient.post('/ai/job-match', resumeData, {
           headers: { 'Content-Type': undefined },
-          timeout: 30000
+          timeout: 45000,
         });
         return res.data?.analysis || null;
       }
-      const res = await apiClient.post('/ai/job-match', { resumeData, jobDescription }, { timeout: 25000 });
+      const res = await apiClient.post('/ai/job-match', { resumeData, jobDescription }, { timeout: 45000 });
       return res.data?.analysis || null;
     } catch {
       return null;
     }
   },
 
-  async analyzeATS(payload) {
-    if (payload instanceof FormData) {
-      const res = await apiClient.post('/ai/analyze-ats', payload, {
-        headers: { 'Content-Type': undefined },
-        timeout: 30000,
-      });
-      return res.data;
-    } else {
-      const res = await apiClient.post('/ai/analyze-ats', payload, {
-        timeout: 30000,
-      });
-      return res.data;
-    }
-  },
-
   async getCareerRecommendations(profile, options = {}) {
     try {
-      const res = await apiClient.post('/ai/career-recommendations', { profile, options }, { timeout: 15000 });
+      const res = await apiClient.post('/ai/career-recommendations', { profile, options }, { timeout: 30000 });
       return res.data;
     } catch {
       return null;
@@ -316,12 +429,12 @@ export const apiService = {
 
   async getCareerRoadmap(roleId, profile, completedTaskIds = []) {
     try {
-      const res = await apiClient.post('/ai/career-roadmap', { roleId, profile, completedTaskIds }, { timeout: 15000 });
+      const res = await apiClient.post('/ai/career-roadmap', { roleId, profile, completedTaskIds }, { timeout: 30000 });
       return res.data?.roadmap || null;
     } catch {
       return null;
     }
-  }
+  },
 };
 
 export default apiClient;

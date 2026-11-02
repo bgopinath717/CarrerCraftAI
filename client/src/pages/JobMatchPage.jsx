@@ -240,7 +240,7 @@ Requirements:
     if (!matchResult) return;
     const isUpload = resumeSourceMode === 'upload' && uploadedFile;
     const resumeTitle = isUpload ? uploadedFile.name : (activeResume?.title || 'MERN Developer Resume');
-    const candidateName = isUpload ? (matchResult?.candidateName || uploadedFile.name.replace(/\.[^/.]+$/, '')) : (activeResume?.personalInfo?.fullName || 'B. Gopinath');
+    const candidateName = isUpload ? (matchResult?.candidateName || uploadedFile.name.replace(/\.[^/.]+$/, '')) : (activeResume?.personalInfo?.fullName || user?.name || 'Candidate');
 
     const savePayload = {
       id: `jm-${Date.now()}`,
@@ -262,7 +262,7 @@ Requirements:
     if (!matchResult) return;
     const isUpload = resumeSourceMode === 'upload' && uploadedFile;
     const resumeTitle = isUpload ? uploadedFile.name : (activeResume?.title || 'Resume');
-    const candidateName = isUpload ? (matchResult?.candidateName || uploadedFile.name.replace(/\.[^/.]+$/, '')) : (activeResume?.personalInfo?.fullName || 'B. Gopinath');
+    const candidateName = isUpload ? (matchResult?.candidateName || uploadedFile.name.replace(/\.[^/.]+$/, '')) : (activeResume?.personalInfo?.fullName || user?.name || 'Candidate');
 
     try {
       pdfService.generateJobMatchReportPDF({
@@ -411,7 +411,7 @@ Requirements:
                 <div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Candidate</div>
                   <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-dark-blue)' }}>
-                    {activeResume?.personalInfo?.fullName || 'B. Gopinath'}
+                    {activeResume?.personalInfo?.fullName || user?.name || 'Candidate'}
                   </div>
                 </div>
                 <span className="badge badge-success">

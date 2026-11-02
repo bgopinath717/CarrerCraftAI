@@ -46,7 +46,7 @@ export const pdfService = {
     }
 
     // 1. Header (Centered for Classic ATS / Minimal, aligned for others)
-    const fullName = resume.personalInfo?.fullName || 'B Gopinath';
+    const fullName = resume.personalInfo?.fullName || 'Candidate Resume';
     doc.setFont(fontPrimary, 'bold');
     doc.setFontSize(isClassic ? 21 : 19);
 
@@ -406,7 +406,7 @@ export const pdfService = {
     }
 
     // Filename generation
-    const rawName = resume.personalInfo?.fullName || 'Gopinath';
+    const rawName = resume.personalInfo?.fullName || 'Candidate';
     const safeName = rawName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
     const filename = `${safeName || 'Candidate'}_Resume.pdf`;
 
@@ -591,7 +591,7 @@ export const pdfService = {
   /**
    * Generates a professional ATS-compliant Cover Letter PDF strictly in Times New Roman
    */
-  generateCoverLetterPDF({ candidateName = 'B. Gopinath', jobTitle = 'MERN Stack Developer', companyName = 'Company', content = '', email = '', phone = '', location = '' }) {
+  generateCoverLetterPDF({ candidateName = 'Applicant', jobTitle = 'Software Developer', companyName = 'Company', content = '', email = '', phone = '', location = '' }) {
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ArrowRight, LayoutDashboard, LogOut, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from './Button';
@@ -8,6 +8,12 @@ export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -87,7 +93,7 @@ export const Navbar = () => {
                 Dashboard
               </Button>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="btn btn-ghost btn-sm"
                 title="Log Out"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#64748B' }}
@@ -101,7 +107,7 @@ export const Navbar = () => {
               <Button to="/login" variant="ghost" size="md">
                 Log In
               </Button>
-              <Button to="/resumes/builder" variant="primary" size="md" icon={ArrowRight}>
+              <Button to="/register" variant="primary" size="md" icon={ArrowRight}>
                 Create My Resume
               </Button>
             </div>
@@ -174,7 +180,7 @@ export const Navbar = () => {
                   style={{ width: '100%' }}
                   icon={LogOut}
                   onClick={() => {
-                    logout();
+                    handleLogout();
                     setMobileMenuOpen(false);
                   }}
                 >
@@ -192,7 +198,7 @@ export const Navbar = () => {
                   Log In
                 </Button>
                 <Button
-                  to="/resumes/builder"
+                  to="/register"
                   variant="primary"
                   style={{ width: '100%' }}
                   onClick={() => setMobileMenuOpen(false)}

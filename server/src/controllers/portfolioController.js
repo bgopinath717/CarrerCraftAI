@@ -2,7 +2,6 @@ import { createRequire } from 'module';
 import mammoth from 'mammoth';
 import { Portfolio } from '../models/Portfolio.js';
 import { Profile } from '../models/Profile.js';
-import { User } from '../models/User.js';
 import { parseResumeToPortfolio } from '../services/resumePortfolioParser.js';
 
 const require = createRequire(import.meta.url);
@@ -11,34 +10,25 @@ const pdfParsePkg = require('pdf-parse');
 export const getPublicPortfolio = async (req, res) => {
   try {
     const { slug } = req.params;
-    const cleanSlug = (slug || 'gopinath').toLowerCase().trim();
-
-    let portfolio = await Portfolio.findOne({ slug: cleanSlug });
-
-    // If not found by exact slug, try finding any portfolio or default
-    if (!portfolio) {
-      portfolio = await Portfolio.findOne();
+    if (!slug) {
+      return res.status(404).json({ success: false, message: 'Portfolio slug not specified' });
     }
 
-    let profile = null;
-    if (portfolio) {
-      profile = await Profile.findOne({ userId: portfolio.userId });
+    const cleanSlug = slug.toLowerCase().trim();
+    const portfolio = await Portfolio.findOne({ slug: cleanSlug });
+
+    if (!portfolio || !portfolio.isPublic) {
+      return res.status(404).json({
+        success: false,
+        message: 'Portfolio not found or is currently set to private.',
+      });
     }
 
-    if (!profile) {
-      profile = await Profile.findOne();
-    }
+    const profile = await Profile.findOne({ userId: portfolio.userId });
 
     res.json({
       success: true,
-      portfolioSettings: portfolio || {
-        slug: 'gopinath',
-        theme: 'tech-dark',
-        tagline: 'I build modern web applications using MongoDB, Express.js, React.js and Node.js.',
-        customBio: '',
-        showContactForm: true,
-        accentColor: '#6366f1',
-      },
+      portfolioSettings: portfolio,
       profile: profile || null,
     });
   } catch (error) {
@@ -49,12 +39,25 @@ export const getPublicPortfolio = async (req, res) => {
 export const getPortfolioSettings = async (req, res) => {
   try {
     let portfolio = await Portfolio.findOne({ userId: req.user._id });
+
     if (!portfolio) {
+      const baseSlug = req.user.name.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'developer';
+      const slugSuffix = req.user._id.toString().slice(-4);
+      const slug = `${baseSlug}-${slugSuffix}`;
+
       portfolio = await Portfolio.create({
         userId: req.user._id,
-        slug: 'gopinath',
+        slug,
+        portfolioTitle: `${req.user.name}'s Portfolio`,
+        theme: 'tech-dark',
+        tagline: 'Professional Software Developer',
+        customBio: '',
+        showContactForm: true,
+        accentColor: '#2196D3',
+        isPublic: true,
       });
     }
+
     res.json({ success: true, portfolioSettings: portfolio });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -63,13 +66,46 @@ export const getPortfolioSettings = async (req, res) => {
 
 export const updatePortfolioSettings = async (req, res) => {
   try {
-    const updateData = req.body;
-    let portfolio = await Portfolio.findOneAndUpdate(
+    const updateData = { ...req.body };
+    delete updateData._id;
+    delete updateData.id;
+    delete updateData.userId; // Enforce user isolation
+
+    // If slug is being updated, ensure uniqueness
+    if (updateData.slug) {
+      const cleanSlug = updateData.slug.toLowerCase().trim();
+      const existingSlug = await Portfolio.findOne({
+        slug: cleanSlug,
+        userId: { $ne: req.user._id },
+      });
+      if (existingSlug) {
+        return res.status(400).json({
+          success: false,
+          message: 'This portfolio URL slug is already taken. Please choose another.',
+        });
+      }
+      updateData.slug = cleanSlug;
+    }
+
+    const portfolio = await Portfolio.findOneAndUpdate(
       { userId: req.user._id },
       { $set: updateData },
-      { new: true, upsert: true }
+      { new: true, upsert: true, runValidators: true }
     );
+
     res.json({ success: true, portfolioSettings: portfolio });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deletePortfolio = async (req, res) => {
+  try {
+    const deleted = await Portfolio.findOneAndDelete({ userId: req.user._id });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Portfolio not found' });
+    }
+    res.json({ success: true, message: 'Portfolio deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -103,7 +139,7 @@ export const generatePortfolioFromResume = async (req, res) => {
           console.error('[Portfolio PDF Parse Error]:', pdfErr);
           return res.status(400).json({
             success: false,
-            message: 'Unable to parse PDF document. Please check the file is not corrupted or password protected.'
+            message: 'Unable to parse PDF document. Please check the file is not corrupted or password protected.',
           });
         }
       } else if (originalName.endsWith('.docx') || originalName.endsWith('.doc') || mime.includes('word')) {
@@ -114,11 +150,10 @@ export const generatePortfolioFromResume = async (req, res) => {
           console.error('[Portfolio DOCX Parse Error]:', docxErr);
           return res.status(400).json({
             success: false,
-            message: 'Unable to parse Word document.'
+            message: 'Unable to parse Word document.',
           });
         }
       } else {
-        // Plain text, markdown, or other text upload
         extractedText = file.buffer.toString('utf-8');
       }
     } else if (req.body.text) {
@@ -132,7 +167,7 @@ export const generatePortfolioFromResume = async (req, res) => {
     if (!extractedText || extractedText.trim().length < 25) {
       return res.status(400).json({
         success: false,
-        message: 'Unable to extract text from document. Please upload a readable PDF, DOCX, or text resume.'
+        message: 'Unable to extract text from document. Please upload a readable PDF, DOCX, or text resume.',
       });
     }
 
@@ -140,21 +175,13 @@ export const generatePortfolioFromResume = async (req, res) => {
     const parsedResult = await parseResumeToPortfolio(extractedText, originalName);
     const { profile: generatedProfile, portfolioSettings: generatedSettings } = parsedResult;
 
-    // Resolve active user (authenticated user or fallback to demo user in DB)
-    let targetUser = req.user;
-    if (!targetUser) {
-      targetUser = await User.findOne({ email: 'gopinath.mern@example.com' });
-      if (!targetUser) targetUser = await User.findOne();
-    }
-
-    // Persist to MongoDB if user exists
-    if (targetUser) {
-      // 1. Update Profile
+    // Persist to MongoDB if user is authenticated
+    if (req.user) {
       await Profile.findOneAndUpdate(
-        { userId: targetUser._id },
+        { userId: req.user._id },
         {
           $set: {
-            userId: targetUser._id,
+            userId: req.user._id,
             personalInfo: generatedProfile.personalInfo,
             careerInfo: generatedProfile.careerInfo,
             education: generatedProfile.education,
@@ -162,26 +189,25 @@ export const generatePortfolioFromResume = async (req, res) => {
             experience: generatedProfile.experience,
             projects: generatedProfile.projects,
             certifications: generatedProfile.certifications || [],
-            achievements: generatedProfile.achievements || []
-          }
+            achievements: generatedProfile.achievements || [],
+          },
         },
         { upsert: true, new: true }
       );
 
-      // 2. Update Portfolio
       await Portfolio.findOneAndUpdate(
-        { userId: targetUser._id },
+        { userId: req.user._id },
         {
           $set: {
-            userId: targetUser._id,
+            userId: req.user._id,
             slug: generatedSettings.slug,
             theme: generatedSettings.theme || 'tech-blue',
             tagline: generatedSettings.tagline,
             customBio: generatedSettings.customBio || generatedProfile.careerInfo.summary,
             showContactForm: true,
-            accentColor: generatedSettings.accentColor || '#079FE8',
-            isPublic: true
-          }
+            accentColor: generatedSettings.accentColor || '#2196D3',
+            isPublic: true,
+          },
         },
         { upsert: true, new: true }
       );
@@ -204,17 +230,16 @@ export const generatePortfolioFromResume = async (req, res) => {
         experienceCount: generatedProfile.experience?.length || 0,
         educationCount: generatedProfile.education?.length || 0,
         certificationsCount: generatedProfile.certifications?.length || 0,
-        achievementsCount: generatedProfile.achievements?.length || 0
+        achievementsCount: generatedProfile.achievements?.length || 0,
       },
       source: parsedResult.source,
-      message: `Successfully analyzed resume! Generated developer portfolio website for ${generatedProfile.personalInfo.fullName}.`
+      message: `Successfully analyzed resume! Generated developer portfolio website for ${generatedProfile.personalInfo.fullName}.`,
     });
-
   } catch (error) {
     console.error('[Portfolio Generator Error]:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Internal error generating portfolio from resume.'
+      message: error.message || 'Internal error generating portfolio from resume.',
     });
   }
 };

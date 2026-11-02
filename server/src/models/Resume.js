@@ -10,8 +10,12 @@ const resumeSchema = new mongoose.Schema(
     },
     title: {
       type: String,
-      required: true,
-      default: 'MERN Stack Developer Resume',
+      default: 'My Resume',
+      trim: true,
+    },
+    resumeTitle: {
+      type: String,
+      trim: true,
     },
     template: {
       type: String,
@@ -19,13 +23,21 @@ const resumeSchema = new mongoose.Schema(
     },
     targetRole: {
       type: String,
-      default: 'MERN Stack Developer',
+      default: 'Software Developer',
     },
     personalInfo: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    personalDetails: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     summary: {
+      type: String,
+      default: '',
+    },
+    professionalSummary: {
       type: String,
       default: '',
     },
@@ -63,12 +75,12 @@ const resumeSchema = new mongoose.Schema(
     },
     atsScore: {
       type: Number,
-      default: 85,
+      default: 0,
     },
     status: {
       type: String,
       enum: ['Draft', 'Completed', 'Reviewing'],
-      default: 'Completed',
+      default: 'Draft',
     },
   },
   {
@@ -76,11 +88,37 @@ const resumeSchema = new mongoose.Schema(
   }
 );
 
-// Format output object so id is string representation of _id or custom id
+// Keep both field name conventions synchronized
+resumeSchema.pre('save', function (next) {
+  if (this.title && !this.resumeTitle) {
+    this.resumeTitle = this.title;
+  } else if (this.resumeTitle && !this.title) {
+    this.title = this.resumeTitle;
+  }
+
+  if (this.personalInfo && Object.keys(this.personalInfo).length > 0 && (!this.personalDetails || Object.keys(this.personalDetails).length === 0)) {
+    this.personalDetails = this.personalInfo;
+  } else if (this.personalDetails && Object.keys(this.personalDetails).length > 0 && (!this.personalInfo || Object.keys(this.personalInfo).length === 0)) {
+    this.personalInfo = this.personalDetails;
+  }
+
+  if (this.summary && !this.professionalSummary) {
+    this.professionalSummary = this.summary;
+  } else if (this.professionalSummary && !this.summary) {
+    this.summary = this.professionalSummary;
+  }
+
+  next();
+});
+
 resumeSchema.set('toJSON', {
   virtuals: true,
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
+    // Guarantee title and personalInfo are present for client UI
+    ret.title = ret.title || ret.resumeTitle || 'My Resume';
+    ret.personalInfo = ret.personalInfo || ret.personalDetails || {};
+    ret.summary = ret.summary || ret.professionalSummary || '';
     return ret;
   },
 });

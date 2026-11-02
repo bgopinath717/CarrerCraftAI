@@ -7,25 +7,23 @@ const profileSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
       unique: true,
+      index: true,
     },
     personalInfo: {
-      fullName: { type: String, default: 'B. Gopinath' },
-      title: { type: String, default: 'MERN Stack Developer' },
-      email: { type: String, default: 'gopinath.mern@example.com' },
-      phone: { type: String, default: '+91 98765 43210' },
-      location: { type: String, default: 'Chennai, Tamil Nadu, India' },
-      linkedin: { type: String, default: 'https://linkedin.com/in/gopinath-mern' },
-      github: { type: String, default: 'https://github.com/gopinath-dev' },
-      website: { type: String, default: 'https://careercraft-ai.dev/portfolio/gopinath' },
-      avatar: {
-        type: String,
-        default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-      },
+      fullName: { type: String, default: '' },
+      title: { type: String, default: '' },
+      email: { type: String, default: '' },
+      phone: { type: String, default: '' },
+      location: { type: String, default: '' },
+      linkedin: { type: String, default: '' },
+      github: { type: String, default: '' },
+      website: { type: String, default: '' },
+      avatar: { type: String, default: '' },
     },
     careerInfo: {
       objective: { type: String, default: '' },
       summary: { type: String, default: '' },
-      targetRole: { type: String, default: 'MERN Stack Developer' },
+      targetRole: { type: String, default: '' },
       careerInterests: { type: [String], default: [] },
     },
     education: {
@@ -122,5 +120,13 @@ const profileSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+profileSchema.set('toJSON', {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    return ret;
+  },
+});
 
 export const Profile = mongoose.model('Profile', profileSchema);

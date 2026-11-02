@@ -25,7 +25,7 @@ export const ResumeTemplate = ({ resume, template = 'classic-ats' }) => {
     <div className={`resume-paper ${templateClass}`} id="resume-printable-area">
       {/* Header / Personal Details */}
       <header className="resume-header">
-        <h1 className="resume-name">{personalInfo.fullName || "B Gopinath"}</h1>
+        <h1 className="resume-name">{personalInfo.fullName || "Your Name"}</h1>
         {currentTemplate !== 'classic-ats' && personalInfo.title && (
           <div className="resume-title">{personalInfo.title}</div>
         )}

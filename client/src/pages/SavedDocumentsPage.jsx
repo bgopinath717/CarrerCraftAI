@@ -415,7 +415,7 @@ export const SavedDocumentsPage = () => {
               </div>
 
               <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                <div>URL: <strong>/portfolio/{portfolio.slug || 'gopinath'}</strong></div>
+                <div>URL: <strong>/portfolio/{portfolio.slug || ''}</strong></div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                   Status: Published & Accessible
                 </div>
@@ -427,7 +427,7 @@ export const SavedDocumentsPage = () => {
                     Configure
                   </Button>
                 </Link>
-                <Link to={`/portfolio/${portfolio.slug || 'gopinath'}`} target="_blank" style={{ flex: 1 }}>
+                <Link to={`/portfolio/${portfolio.slug || ''}`} target="_blank" style={{ flex: 1 }}>
                   <Button variant="primary" size="sm" icon={ExternalLink} style={{ width: '100%' }}>
                     View Live
                   </Button>

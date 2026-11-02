@@ -124,7 +124,7 @@ export const CoverLetterPage = () => {
     }
     try {
       pdfService.generateCoverLetterPDF({
-        candidateName: profile?.personalInfo?.fullName || 'B. Gopinath',
+        candidateName: profile?.personalInfo?.fullName || user?.name || 'Applicant',
         jobTitle,
         companyName,
         content: editableContent,
@@ -221,7 +221,7 @@ export const CoverLetterPage = () => {
           </div>
 
           <div style={{ padding: '0.75rem 1rem', background: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            Candidate Profile Active: <strong>{profile?.personalInfo?.fullName || 'B. Gopinath'}</strong> ({profile?.skills?.technical?.slice(0, 4).join(', ')})
+            Candidate Profile Active: <strong>{profile?.personalInfo?.fullName || user?.name || 'Applicant'}</strong> ({profile?.skills?.technical?.slice(0, 4).join(', ') || 'General Technical'})
           </div>
 
           <Button

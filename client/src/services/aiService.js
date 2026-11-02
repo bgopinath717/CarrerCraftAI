@@ -71,7 +71,7 @@ export const aiService = {
 
     await this.delay(200);
 
-    const userName = userProfile?.personalInfo?.fullName || "B. Gopinath";
+    const userName = userProfile?.personalInfo?.fullName || "Candidate";
     const userRole = userProfile?.personalInfo?.title || "MERN Stack Developer";
     const userSkills = (userProfile?.skills?.technical || ["React.js", "Node.js", "Express.js", "MongoDB", "JavaScript"]).slice(0, 5).join(', ');
     const userProjects = (userProfile?.projects || []).map(p => p.name).join(' and ') || "CareerCraft AI and E-Commerce Web Platforms";

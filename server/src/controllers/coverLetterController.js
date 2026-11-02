@@ -1,5 +1,5 @@
-import { CoverLetter } from '../models/CoverLetter.js';
 import mongoose from 'mongoose';
+import { CoverLetter } from '../models/CoverLetter.js';
 
 export const getCoverLetters = async (req, res) => {
   try {
@@ -10,11 +10,39 @@ export const getCoverLetters = async (req, res) => {
   }
 };
 
+export const getCoverLetterById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ success: false, message: 'Invalid cover letter ID' });
+    }
+
+    const letter = await CoverLetter.findOne({ _id: id, userId: req.user._id });
+    if (!letter) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cover letter not found or you do not have permission to access it',
+      });
+    }
+
+    res.json({ success: true, coverLetter: letter });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const createCoverLetter = async (req, res) => {
   try {
-    const letterData = { ...req.body, userId: req.user._id };
+    const letterData = { ...req.body };
     delete letterData._id;
     delete letterData.id;
+    letterData.userId = req.user._id;
+
+    if (!letterData.title) letterData.title = 'Job Application Cover Letter';
+    if (!letterData.content) {
+      return res.status(400).json({ success: false, message: 'Cover letter content is required' });
+    }
 
     const letter = await CoverLetter.create(letterData);
     res.status(201).json({ success: true, coverLetter: letter });
@@ -29,19 +57,24 @@ export const updateCoverLetter = async (req, res) => {
     const updateData = { ...req.body };
     delete updateData._id;
     delete updateData.id;
+    delete updateData.userId; // Prevent transferring ownership
 
-    let filter = { userId: req.user._id };
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      filter._id = id;
-    } else {
-      const created = await CoverLetter.create({ ...req.body, userId: req.user._id });
-      return res.json({ success: true, coverLetter: created });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const created = await CoverLetter.create({ ...updateData, userId: req.user._id });
+      return res.status(201).json({ success: true, coverLetter: created });
     }
 
-    const updated = await CoverLetter.findOneAndUpdate(filter, { $set: updateData }, { new: true });
+    const updated = await CoverLetter.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
     if (!updated) {
-      const created = await CoverLetter.create({ ...updateData, userId: req.user._id });
-      return res.json({ success: true, coverLetter: created });
+      return res.status(404).json({
+        success: false,
+        message: 'Cover letter not found or you do not have permission to update it',
+      });
     }
 
     res.json({ success: true, coverLetter: updated });
@@ -53,12 +86,19 @@ export const updateCoverLetter = async (req, res) => {
 export const deleteCoverLetter = async (req, res) => {
   try {
     const { id } = req.params;
-    let filter = { userId: req.user._id };
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      filter._id = id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ success: false, message: 'Invalid cover letter ID' });
     }
 
-    await CoverLetter.findOneAndDelete(filter);
+    const deleted = await CoverLetter.findOneAndDelete({ _id: id, userId: req.user._id });
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cover letter not found or you do not have permission to delete it',
+      });
+    }
+
     res.json({ success: true, message: 'Cover letter deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

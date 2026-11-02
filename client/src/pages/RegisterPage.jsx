@@ -1,59 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, User, Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { useToast } from '../components/common/Toast';
 
 export const RegisterPage = () => {
-  const [fullName, setFullName] = useState('B. Gopinath');
-  const [email, setEmail] = useState('gopinath.mern@example.com');
-  const [password, setPassword] = useState('password123');
-  const [confirmPassword, setConfirmPassword] = useState('password123');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+
+  const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
 
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!fullName || !email || !password) {
-      addToast('Please fill out all required fields', 'warning');
+
+    // Validation checks
+    if (!fullName.trim()) {
+      addToast('Please enter your full name', 'warning');
       return;
     }
+    if (fullName.trim().length < 2) {
+      addToast('Full name must be at least 2 characters long', 'warning');
+      return;
+    }
+
+    if (!email.trim()) {
+      addToast('Please enter your email address', 'warning');
+      return;
+    }
+    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(email.trim())) {
+      addToast('Please enter a valid email address (e.g. name@example.com)', 'warning');
+      return;
+    }
+
+    if (!password) {
+      addToast('Please enter a password', 'warning');
+      return;
+    }
+    if (password.length < 6) {
+      addToast('Password must be at least 6 characters long', 'warning');
+      return;
+    }
+
     if (password !== confirmPassword) {
-      addToast('Passwords do not match', 'danger');
+      addToast('Passwords do not match. Please verify your password.', 'danger');
       return;
     }
+
     if (!agreeTerms) {
-      addToast('Please accept terms and conditions', 'warning');
+      addToast('Please accept the Terms of Service & Privacy Policy', 'warning');
       return;
     }
 
     setLoading(true);
-    const res = await register(fullName, email, password);
+    const res = await register(fullName.trim(), email.trim(), password);
     setLoading(false);
 
     if (res.success) {
-      addToast(`Account created successfully! Welcome ${fullName}.`, 'success');
+      addToast(`Account created successfully! Welcome to CareerCraft AI, ${fullName.trim()}.`, 'success');
       navigate('/dashboard');
     } else {
-      addToast(res.message || 'Registration failed', 'danger');
+      addToast(res.message || 'Registration failed. Email may already be registered.', 'danger');
     }
   };
 
   return (
-    <div style={{
-      minHeight: '85vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2.5rem 1rem'
-    }}>
+    <div
+      style={{
+        minHeight: '85vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2.5rem 1rem',
+      }}
+    >
       <div style={{ width: '100%', maxWidth: '480px' }}>
-        
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img
@@ -63,10 +99,17 @@ export const RegisterPage = () => {
               width: '3.5rem',
               height: '3.5rem',
               objectFit: 'contain',
-              marginBottom: '1rem'
+              marginBottom: '1rem',
             }}
           />
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-dark-blue)' }}>
+          <h1
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              marginBottom: '0.5rem',
+              color: 'var(--color-dark-blue)',
+            }}
+          >
             Create Your Account
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
@@ -77,7 +120,6 @@ export const RegisterPage = () => {
         {/* Form Card */}
         <Card elevated style={{ padding: '2rem' }}>
           <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            
             <div>
               <label className="input-label">Full Name</label>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -86,9 +128,11 @@ export const RegisterPage = () => {
                   type="text"
                   className="input-field"
                   style={{ paddingLeft: '2.5rem' }}
-                  placeholder="e.g. B. Gopinath"
+                  placeholder="e.g. John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  autoComplete="name"
+                  required
                 />
               </div>
             </div>
@@ -101,9 +145,11 @@ export const RegisterPage = () => {
                   type="email"
                   className="input-field"
                   style={{ paddingLeft: '2.5rem' }}
-                  placeholder="e.g. gopinath@example.com"
+                  placeholder="e.g. john@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
                 />
               </div>
             </div>
@@ -119,6 +165,8 @@ export const RegisterPage = () => {
                   placeholder="Minimum 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
                 />
               </div>
             </div>
@@ -134,6 +182,8 @@ export const RegisterPage = () => {
                   placeholder="Re-enter password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
                 />
               </div>
             </div>
@@ -159,18 +209,24 @@ export const RegisterPage = () => {
               icon={ArrowRight}
               style={{ width: '100%', marginTop: '0.5rem' }}
             >
-              Create My Free Account
+              Create Account
             </Button>
           </form>
 
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          <div
+            style={{
+              textAlign: 'center',
+              marginTop: '1.5rem',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)',
+            }}
+          >
             Already have an account?{' '}
             <Link to="/login" style={{ color: 'var(--primary-600)', fontWeight: 700 }}>
               Sign In
             </Link>
           </div>
         </Card>
-
       </div>
     </div>
   );

@@ -23,29 +23,61 @@ import { Card } from '../components/common/Card';
 import { ATSScoreGauge } from '../components/ats/ATSScoreGauge';
 import { storageService } from '../services/storageService';
 import { atsEngine } from '../services/atsEngine';
-import { sampleUserData } from '../data/sampleUserData';
+import { useAuth } from '../context/AuthContext';
+
+// Static illustrative generic preview resume (independent of user accounts)
+const genericPreviewResume = {
+  title: "Software Developer Resume",
+  targetRole: "Software Developer",
+  personalInfo: {
+    fullName: "A. B. C.",
+    title: "Software Developer",
+    email: "abc@example.com",
+    location: "City, Country",
+    linkedin: "linkedin.com/in/example-dev",
+    github: "github.com/example-dev"
+  },
+  summary: "Dedicated Software Developer proficient in React.js, Node.js, Express.js, and MongoDB. Experienced in architecting performant frontends, building secure RESTful APIs, and implementing production web applications.",
+  skills: {
+    technical: ["React.js", "Node.js", "Express.js", "MongoDB", "JavaScript", "REST APIs", "Git"]
+  },
+  experience: [
+    {
+      company: "Tech Solutions Inc.",
+      position: "Software Developer Intern",
+      startDate: "2024",
+      endDate: "Present",
+      current: true,
+      description: "Generic illustrative experience building responsive full-stack applications.",
+      bullets: [
+        "Architected modular React components, improving load times and ensuring cross-device responsiveness.",
+        "Engineered RESTful APIs with Express and Node.js with secure token-based authentication."
+      ]
+    }
+  ],
+  education: [
+    {
+      degree: "B.S. in Computer Science",
+      institution: "State University",
+      startYear: "2020",
+      endYear: "2024"
+    }
+  ],
+  projects: [
+    {
+      name: "Full Stack Web Application",
+      description: "Cloud-hosted platform built with MongoDB, Express, React, and Node.js."
+    }
+  ]
+};
 
 export const LandingPage = () => {
-  // Retrieve saved resume or use representative sample data
-  const sampleResume = useMemo(() => {
-    const saved = storageService.getResumes();
-    if (saved && saved.length > 0) return saved[0];
-    return {
-      title: "MERN Stack Developer Resume",
-      targetRole: "MERN Stack Developer",
-      personalInfo: sampleUserData.personalInfo,
-      summary: sampleUserData.careerInfo.summary,
-      experience: sampleUserData.experience,
-      education: sampleUserData.education,
-      skills: sampleUserData.skills,
-      projects: sampleUserData.projects,
-    };
-  }, []);
+  const { isAuthenticated } = useAuth();
 
-  // Compute realistic ATS evaluation using the platform's ATS engine
+  // Compute realistic ATS evaluation using the generic illustrative preview
   const atsAnalysis = useMemo(() => {
-    return atsEngine.analyzeResume(sampleResume);
-  }, [sampleResume]);
+    return atsEngine.analyzeResume(genericPreviewResume);
+  }, []);
 
   const atsScore = atsAnalysis?.score || 88;
   const detectedKeywords = useMemo(() => {
@@ -228,7 +260,7 @@ export const LandingPage = () => {
               }}
             >
               <Button
-                to="/resumes/builder"
+                to={isAuthenticated ? "/resumes/builder" : "/register"}
                 variant="primary"
                 size="md"
                 icon={FileText}
@@ -314,7 +346,7 @@ export const LandingPage = () => {
                   ✓ ATS Verified
                 </span>
                 <span style={{ color: '#64748B', fontWeight: 500 }}>
-                  Role: <strong style={{ color: '#0B3A5B' }}>MERN Stack Developer</strong>
+                  Role: <strong style={{ color: '#0B3A5B' }}>Software Developer</strong>
                 </span>
               </div>
             </div>
@@ -328,7 +360,7 @@ export const LandingPage = () => {
                 padding: '1.5rem'
               }}
             >
-              {/* Left Pane: Resume Document Sheet Preview */}
+              {/* Left Pane: Resume Document Sheet Preview (Generic Illustrative) */}
               <div
                 style={{
                   backgroundColor: '#FFFFFF',
@@ -346,20 +378,20 @@ export const LandingPage = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0B3A5B', margin: 0 }}>
-                        {sampleResume?.personalInfo?.fullName || "B. Gopinath"}
+                        A. B. C.
                       </h3>
                       <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#2196D3', margin: '0.15rem 0 0 0' }}>
-                        {sampleResume?.personalInfo?.title || "MERN Stack Developer"}
+                        Software Developer
                       </p>
                     </div>
                     <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>
-                      Chennai, India
+                      City, Country
                     </span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.4rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <span>gopinath.mern@example.com</span>
+                    <span>abc@example.com</span>
                     <span>•</span>
-                    <span>linkedin.com/in/gopinath-mern</span>
+                    <span>linkedin.com/in/example-dev</span>
                   </div>
                 </div>
 
@@ -369,7 +401,7 @@ export const LandingPage = () => {
                     Professional Summary
                   </h4>
                   <p style={{ fontSize: '0.8125rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
-                    Dedicated MERN Stack Developer proficient in React.js, Node.js, Express.js, and MongoDB. Experienced in architecting performant frontends, building secure RESTful APIs, and implementing production workflows.
+                    Dedicated Software Developer proficient in React.js, Node.js, Express.js, and MongoDB. Experienced in architecting performant frontends, building secure RESTful APIs, and implementing production web applications.
                   </p>
                 </div>
 
@@ -405,11 +437,11 @@ export const LandingPage = () => {
                   </h4>
                   <div style={{ fontSize: '0.8125rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1E293B' }}>
-                      <span>Frontend Engineer Intern</span>
+                      <span>Software Developer Intern</span>
                       <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>2024 – Present</span>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#2196D3', fontWeight: 600, marginBottom: '0.25rem' }}>
-                      CodeCraft Technologies
+                      Tech Solutions Inc.
                     </div>
                     <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#1E293B', lineHeight: 1.45, fontSize: '0.75rem' }}>
                       <li>Architected modular React components, cutting render times by 32% and ensuring responsiveness.</li>

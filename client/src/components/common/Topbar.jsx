@@ -17,9 +17,9 @@ export const Topbar = ({ onOpenSidebar }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const notifications = [
-    { id: 1, title: 'ATS Analysis Complete', desc: 'Your MERN Developer Resume scored 88/100.', time: '10m ago' },
-    { id: 2, title: 'Portfolio Published', desc: 'Your portfolio is live at /portfolio/gopinath', time: '1h ago' },
-    { id: 3, title: 'Career Guidance Ready', desc: '3 new role recommendations matched your profile.', time: '2h ago' }
+    { id: 1, title: 'ATS Analysis Complete', desc: 'Scan your resume against target roles to see score.', time: 'Just now' },
+    { id: 2, title: 'Portfolio Builder', desc: 'Customize and share your professional web portfolio.', time: '1h ago' },
+    { id: 3, title: 'Career Guidance Ready', desc: 'Explore tech roles and skill progression roadmaps.', time: '2h ago' }
   ];
 
   return (
@@ -143,7 +143,7 @@ export const Topbar = ({ onOpenSidebar }) => {
             fontWeight: 700,
             fontSize: '0.875rem'
           }}>
-            {user?.name ? user.name.charAt(0) : 'G'}
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
           </div>
         </Link>
       </div>

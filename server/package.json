@@ -7,7 +7,12 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch --watch-path=src src/server.js",
-    "seed": "node src/seeds/seedData.js"
+    "seed": "node src/seeds/seedData.js",
+    "check-db": "node src/scripts/checkDb.js",
+    "inspect-db": "node src/scripts/inspectDb.js",
+    "clean-demo": "node src/scripts/cleanDemoData.js",
+    "test": "node src/scripts/integrationTest.js",
+    "test:integration": "node src/scripts/integrationTest.js"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",
@@ -27,6 +32,6 @@
     "mongodb",
     "careercraft-ai"
   ],
-  "author": "B. Gopinath",
+  "author": "CareerCraft AI",
   "license": "MIT"
 }
